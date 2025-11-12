@@ -81,7 +81,7 @@ export function renderQueue() {
                     <div class="queue-item-actions">
                         <button class="action-button action-button-cancel" onclick="cancelJob('${item.id}')">
                             <i class="fa-solid fa-xmark"></i>
-                            <span>Cancel</span>
+                            <span class="button-text">Cancel</span>
                         </button>
                     </div>
                 ` : ''}
@@ -104,7 +104,7 @@ export function renderQueue() {
                         <div class="queue-item-actions">
                             <button class="action-button action-button-retry" onclick="retryJob('${item.id}')">
                                 <i class="fa-solid fa-rotate-right"></i>
-                                <span>Retry</span>
+                                <span class="button-text">Retry</span>
                             </button>
                         </div>
                     ` : ''}
