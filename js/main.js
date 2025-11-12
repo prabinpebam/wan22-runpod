@@ -189,15 +189,24 @@ function toggleSidebar() {
     const panel = document.getElementById('generationPanel');
     const queuePanel = document.getElementById('queuePanel');
     const hamburger = document.getElementById('hamburgerButton');
-    
-    panel.classList.toggle('collapsed');
-    queuePanel.classList.toggle('expanded');
-    hamburger.classList.toggle('active');
-    
-    // Add/remove overlay effect on queue when sidebar is open on mobile
-    if (window.innerWidth <= 768) {
-        queuePanel.classList.toggle('with-sidebar');
+
+    if (!panel || !queuePanel || !hamburger) {
+        return;
     }
+
+    const willOpen = panel.classList.contains('collapsed');
+
+    if (willOpen) {
+        panel.classList.remove('collapsed');
+        queuePanel.classList.remove('expanded');
+    } else {
+        panel.classList.add('collapsed');
+        queuePanel.classList.add('expanded');
+    }
+
+    const sidebarOpen = !panel.classList.contains('collapsed');
+    hamburger.classList.toggle('active', sidebarOpen);
+    document.body.classList.toggle('sidebar-open', sidebarOpen);
 }
 
 // Close sidebar when clicking outside on mobile
@@ -206,13 +215,18 @@ document.addEventListener('click', function(event) {
         const panel = document.getElementById('generationPanel');
         const hamburger = document.getElementById('hamburgerButton');
         const queuePanel = document.getElementById('queuePanel');
-        
-        if (!panel.contains(event.target) && 
-            !hamburger.contains(event.target) && 
+
+        if (!panel || !queuePanel || !hamburger) {
+            return;
+        }
+
+        if (!panel.contains(event.target) &&
+            !hamburger.contains(event.target) &&
             !panel.classList.contains('collapsed')) {
             panel.classList.add('collapsed');
-            queuePanel.classList.remove('with-sidebar');
+            queuePanel.classList.add('expanded');
             hamburger.classList.remove('active');
+            document.body.classList.remove('sidebar-open');
         }
     }
 });
@@ -222,64 +236,94 @@ window.addEventListener('resize', function() {
     const panel = document.getElementById('generationPanel');
     const queuePanel = document.getElementById('queuePanel');
     const hamburger = document.getElementById('hamburgerButton');
-    
+
+    if (!panel || !queuePanel) {
+        return;
+    }
+
     if (window.innerWidth > 768) {
-        // Desktop: always show sidebar
         panel.classList.remove('collapsed');
         queuePanel.classList.remove('expanded');
-        queuePanel.classList.remove('with-sidebar');
-        hamburger.classList.remove('active');
-    } else {
-        // Mobile: collapse by default
-        if (!hamburger.classList.contains('active')) {
-            panel.classList.add('collapsed');
-            queuePanel.classList.add('expanded');
-        }
-    }
-});
-
-// Initialize sidebar state on load
-function initializeSidebarState() {
-    if (window.innerWidth <= 768) {
-        const panel = document.getElementById('generationPanel');
-        const queuePanel = document.getElementById('queuePanel');
+        hamburger?.classList.remove('active');
+    } else if (!hamburger?.classList.contains('active')) {
         panel.classList.add('collapsed');
         queuePanel.classList.add('expanded');
     }
-}
 
-// Add viewport height fix for mobile browsers
-function setMobileViewportHeight() {
-    // Get the actual viewport height
+    document.body.classList.remove('sidebar-open');
+});
+
+// CRITICAL: Run IMMEDIATELY before anything else
+(function() {
+    // Set viewport height immediately
     const vh = window.innerHeight * 0.01;
     document.documentElement.style.setProperty('--vh', `${vh}px`);
     
-    // Also update on orientation change
-    console.log(`Viewport height updated: ${window.innerHeight}px (--vh: ${vh}px)`);
+    // On mobile, ensure sidebar starts collapsed
+    if (window.innerWidth <= 768) {
+        // Use requestAnimationFrame to ensure DOM is ready
+        requestAnimationFrame(() => {
+            const panel = document.getElementById('generationPanel');
+            if (panel) {
+                panel.classList.add('collapsed');
+            }
+        });
+    }
+})();
+
+// Add viewport height fix IMMEDIATELY (before DOM load)
+function setMobileViewportHeight() {
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+}
+
+// Set immediately
+setMobileViewportHeight();
+
+// Initialize sidebar state on load
+function initializeSidebarState() {
+    const panel = document.getElementById('generationPanel');
+    const queuePanel = document.getElementById('queuePanel');
+    const hamburger = document.getElementById('hamburgerButton');
+
+    if (!panel || !queuePanel) {
+        console.warn('Sidebar elements not found during initialization');
+        return;
+    }
+
+    if (window.innerWidth <= 768) {
+        panel.classList.add('collapsed');
+        queuePanel.classList.add('expanded');
+    } else {
+        panel.classList.remove('collapsed');
+        queuePanel.classList.remove('expanded');
+    }
+
+    document.body.classList.remove('sidebar-open');
+    hamburger?.classList.remove('active');
 }
 
 // Set on load and resize
 window.addEventListener('load', setMobileViewportHeight);
 window.addEventListener('resize', setMobileViewportHeight);
-window.addEventListener('orientationchange', () => {
-    // Add small delay for orientation change
-    setTimeout(setMobileViewportHeight, 100);
-});
+window.addEventListener('orientationchange', setMobileViewportHeight);
 
-// Force update on touchstart (helps with iOS Safari)
-let touchStarted = false;
-document.addEventListener('touchstart', () => {
-    if (!touchStarted) {
-        touchStarted = true;
-        setMobileViewportHeight();
-    }
-}, { once: true });
+// Ensure we have an initial value as early as possible
+setMobileViewportHeight();
 
 // ============================================
 // INITIALIZATION
 // ============================================
 
 function initializeApp() {
+    console.log('Initializing app...');
+    
+    // Set viewport height first
+    setMobileViewportHeight();
+    
+    // Initialize sidebar state IMMEDIATELY
+    initializeSidebarState();
+    
     settingsModule.loadSettings();
     queueModule.loadQueue();
     queueModule.resumeQueuePolling();
@@ -295,9 +339,29 @@ function initializeApp() {
             queueModule.renderQueue();
         }
     }, 1000);
-
-    initializeSidebarState();
+    
+    // Mark app as ready (shows panels with fade-in)
+    // Use requestAnimationFrame to ensure all layout is complete
+    requestAnimationFrame(() => {
+        document.body.classList.add('app-ready');
+        console.log('App ready - panels visible');
+    });
+    
+    console.log('App initialized successfully');
 }
 
-// Initialize on load
-window.addEventListener('DOMContentLoaded', initializeApp);
+// Ensure panels become visible even if initialization is delayed
+window.addEventListener('load', () => {
+    if (!document.body.classList.contains('app-ready')) {
+        document.body.classList.add('app-ready');
+    }
+});
+
+// Initialize as early as possible
+if (document.readyState === 'loading') {
+    // DOM still loading
+    document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+    // DOM already loaded (script is deferred/async or at end)
+    initializeApp();
+}
