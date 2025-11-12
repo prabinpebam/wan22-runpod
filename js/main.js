@@ -248,6 +248,18 @@ function initializeSidebarState() {
     }
 }
 
+// Add viewport height fix for mobile browsers
+function setMobileViewportHeight() {
+    // Get the actual viewport height
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+}
+
+// Set on load and resize
+window.addEventListener('load', setMobileViewportHeight);
+window.addEventListener('resize', setMobileViewportHeight);
+window.addEventListener('orientationchange', setMobileViewportHeight);
+
 // ============================================
 // INITIALIZATION
 // ============================================

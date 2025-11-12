@@ -173,11 +173,11 @@ body {
 }
 
 .sidebar-footer {
-    position: absolute;
+    position: sticky; /* Changed from absolute to sticky for better mobile support */
     bottom: 0;
     left: 0;
     right: 0;
-    padding: 0.75rem 1rem; /* Reduced from 1rem 1.5rem */
+    padding: 0.75rem 1rem;
     background-color: var(--surface-color);
     border-top: 1px solid var(--border-color);
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
@@ -946,10 +946,10 @@ body {
 .crop-modal-fullscreen {
     max-width: 1920px;
     max-height: 100vh;
-    max-height: 100dvh; /* Dynamic viewport height */
+    max-height: 100svh; /* Small viewport height - excludes browser UI */
     width: 95vw;
     height: 95vh;
-    height: 95dvh; /* Dynamic viewport height */
+    height: 95svh; /* Small viewport height */
     margin: 0 auto;
     border-radius: 0.75rem;
     display: flex;
@@ -979,18 +979,19 @@ body {
 
 .crop-controls-content {
     flex: 1;
-    padding: 1rem; /* Reduced from 1.5rem */
+    padding: 1rem;
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
 }
 
 .crop-controls-footer {
-    padding: 0.75rem 1rem; /* Reduced from 1rem 1.5rem */
+    padding: 0.75rem 1rem;
     border-top: 1px solid var(--border-color);
     background: var(--surface-color);
     flex-shrink: 0;
     z-index: 10;
+    position: relative; /* Ensure it's positioned correctly */
 }
 
 /* Crop Resolution Selector - Enhanced */
@@ -1085,16 +1086,16 @@ body {
     }
     
     .sidebar-content {
-        padding: 0.75rem; /* Reduced from 1rem */
-        padding-bottom: 70px; /* Reduced from 80px */
+        padding: 0.75rem;
+        padding-bottom: 0; /* Remove bottom padding, let footer be sticky */
         overflow-y: auto;
         overflow-x: hidden;
     }
     
     .sidebar-footer {
-        padding: 0.625rem 0.75rem; /* Reduced from 0.75rem 1rem */
         position: sticky;
         bottom: 0;
+        padding: 0.625rem 0.75rem;
     }
     
     .queue-panel {
@@ -1157,21 +1158,63 @@ body {
         margin-right: 0;
     }
     
-    /* ...existing crop modal code... */
+    /* Crop modal mobile layout - FIXED for smartphones */
+    .crop-modal-fullscreen {
+        width: 100vw;
+        width: 100svw; /* Small viewport width */
+        height: 100vh;
+        height: 100svh; /* Small viewport height - critical for mobile */
+        border-radius: 0;
+    }
+    
+    .crop-modal-body {
+        flex-direction: column;
+        min-height: 0;
+        height: 100%; /* Ensure full height */
+    }
+    
+    .crop-modal-fullscreen .crop-container {
+        flex: 1;
+        order: 1;
+        padding: 1rem;
+        min-height: 40vh;
+        min-height: 40svh;
+        max-height: 55vh; /* Increased from 50vh to give more space */
+        max-height: 55svh;
+        overflow: hidden;
+    }
+    
+    .crop-controls-panel {
+        width: 100%;
+        min-width: 100%;
+        height: auto; /* Changed from max-height */
+        max-height: 45vh; /* Decreased from 50vh */
+        max-height: 45svh;
+        order: 2;
+        border-right: none;
+        border-top: 1px solid var(--border-color);
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden; /* Important: prevent entire panel scroll */
+    }
     
     .crop-controls-content {
         flex: 1;
-        padding: 0.75rem; /* Reduced from 1rem */
+        padding: 0.75rem;
         overflow-y: auto;
         overflow-x: hidden;
         -webkit-overflow-scrolling: touch;
+        min-height: 0; /* Critical for flex scrolling */
     }
     
     .crop-controls-footer {
-        padding: 0.75rem; /* Reduced from 1rem */
+        padding: 0.75rem;
         flex-shrink: 0;
-        position: sticky;
-        bottom: 0;
+        position: relative; /* Changed from sticky - more reliable on mobile */
+        bottom: auto;
+        background: var(--surface-color);
+        border-top: 1px solid var(--border-color);
     }
 }
 
@@ -1219,26 +1262,42 @@ body {
     
     .sidebar-content {
         padding: 0.625rem; /* Reduced from 0.75rem */
-        padding-bottom: 60px; /* Reduced from 70px */
+        padding-bottom: 0; /* Remove bottom padding */
     }
     
     .sidebar-footer {
-        padding: 0.5rem 0.625rem; /* Reduced from 0.625rem 0.75rem */
+        padding: 0.5rem 0.625rem;
     }
     
-    /* ...existing crop modal code... */
+    /* Crop modal small mobile */
+    .crop-modal-fullscreen {
+        height: 100svh; /* Use small viewport height */
+    }
+    
+    .crop-modal-fullscreen .crop-container {
+        padding: 0.5rem;
+        min-height: 35vh;
+        min-height: 35svh;
+        max-height: 50vh; /* Adjusted */
+        max-height: 50svh;
+    }
+    
+    .crop-controls-panel {
+        max-height: 50vh; /* Adjusted */
+        max-height: 50svh;
+    }
     
     .crop-controls-content {
-        padding: 0.625rem; /* Reduced from 0.75rem */
+        padding: 0.625rem;
     }
     
     .crop-controls-footer {
-        padding: 0.625rem; /* Reduced from 0.75rem */
+        padding: 0.625rem;
     }
     
     .modal-button {
-        padding: 0.5rem; /* Reduced from 0.75rem */
-        font-size: 0.875rem; /* Reduced from 0.8125rem */
+        padding: 0.5rem;
+        font-size: 0.875rem;
     }
 }
 
@@ -1276,24 +1335,37 @@ body {
 /* iOS Safari specific fixes */
 @supports (-webkit-touch-callout: none) {
     .app-container {
+        height: 100vh;
         height: -webkit-fill-available;
     }
     
     .main-content {
+        height: calc(100vh - var(--header-height));
         height: calc(-webkit-fill-available - var(--header-height));
     }
     
     .generation-panel,
     .queue-panel {
+        height: calc(100vh - var(--header-height));
         height: calc(-webkit-fill-available - var(--header-height));
+    }
+    
+    /* Crop modal iOS fix */
+    .crop-modal-fullscreen {
+        height: 100vh;
+        height: -webkit-fill-available;
     }
     
     /* Ensure footers stay visible on iOS */
     @media (max-width: 768px) {
-        .sidebar-footer,
-        .crop-controls-footer {
+        .sidebar-footer {
             position: sticky;
             bottom: 0;
+        }
+        
+        .crop-controls-footer {
+            position: relative; /* Relative works better in flex on iOS */
+            bottom: auto;
         }
     }
 }
