@@ -151,7 +151,6 @@ function initializeCropArea() {
         };
         
         updateCropOverlay();
-        updateCropInfo();
         
         console.log('Crop area initialized:', {
             natural: { width: naturalWidth, height: naturalHeight },
