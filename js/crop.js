@@ -73,13 +73,10 @@ window.selectCropResolution = function(width, height, tier, aspect, name) {
     document.querySelectorAll('.crop-resolution-btn').forEach(btn => btn.classList.remove('selected'));
     event.target.closest('.crop-resolution-btn').classList.add('selected');
     
-    // Update crop modal stats
-    document.getElementById('cropTargetRes').textContent = `${width}×${height}`;
-    
-    // Reinitialize crop area with new aspect ratio
+    // IMPORTANT: Reinitialize crop area with new aspect ratio
     initializeCropArea();
     
-    console.log(`Resolution changed: ${name} (${width}×${height})`);
+    console.log(`Resolution changed: ${name} (${width}×${height}) - Crop area updated to new aspect ratio`);
 };
 
 function initializeCropArea() {
@@ -102,6 +99,7 @@ function initializeCropArea() {
     
     let displayWidth, displayHeight;
     
+    // Calculate display size to fit container
     if (imageRatio > containerWidth / containerHeight) {
         displayWidth = Math.min(containerWidth, naturalWidth);
         displayHeight = displayWidth / imageRatio;
@@ -120,22 +118,28 @@ function initializeCropArea() {
         const imgWidth = imgRect.width;
         const imgHeight = imgRect.height;
         
+        // Calculate crop area based on SELECTED resolution aspect ratio
         const targetRatio = state.selectedResolution.width / state.selectedResolution.height;
         const currentImageRatio = imgWidth / imgHeight;
         
         let cropWidth, cropHeight;
         
+        // Fit crop area to image while maintaining target aspect ratio
         if (currentImageRatio > targetRatio) {
+            // Image is wider than target ratio - constrain by height
             cropHeight = imgHeight * 0.9;
             cropWidth = cropHeight * targetRatio;
         } else {
+            // Image is taller than target ratio - constrain by width
             cropWidth = imgWidth * 0.9;
             cropHeight = cropWidth / targetRatio;
         }
         
+        // Ensure crop doesn't exceed image bounds
         cropWidth = Math.min(cropWidth, imgWidth);
         cropHeight = Math.min(cropHeight, imgHeight);
         
+        // Center the crop area
         const cropX = imgLeft + (imgWidth - cropWidth) / 2;
         const cropY = imgTop + (imgHeight - cropHeight) / 2;
         
@@ -153,9 +157,17 @@ function initializeCropArea() {
         updateCropOverlay();
         
         console.log('Crop area initialized:', {
+            targetResolution: `${state.selectedResolution.width}×${state.selectedResolution.height}`,
+            targetRatio: targetRatio.toFixed(3),
             natural: { width: naturalWidth, height: naturalHeight },
             displayed: { width: imgWidth, height: imgHeight, left: imgLeft, top: imgTop },
-            crop: { x: cropX, y: cropY, width: cropWidth, height: cropHeight }
+            crop: { 
+                x: cropX, 
+                y: cropY, 
+                width: cropWidth, 
+                height: cropHeight,
+                ratio: (cropWidth / cropHeight).toFixed(3)
+            }
         });
     }, 50);
 }
@@ -168,18 +180,11 @@ function updateCropOverlay() {
     overlay.style.height = state.cropData.height + 'px';
 }
 
-function updateCropInfo() {
-    document.getElementById('cropCurrentSize').textContent = 
-        `${Math.round(state.cropData.width)}×${Math.round(state.cropData.height)}`;
-    
-    document.getElementById('cropImageSize').textContent = 
-        `${Math.round(state.cropData.imageWidth)}×${Math.round(state.cropData.imageHeight)}`;
-}
-
 export function initializeCropHandlers() {
     const overlay = document.getElementById('cropOverlay');
     const handles = document.querySelectorAll('.crop-handle');
     
+    // Mouse events for desktop
     overlay.addEventListener('mousedown', function(e) {
         if (e.target.classList.contains('crop-handle')) return;
         state.isDragging = true;
@@ -203,9 +208,9 @@ export function initializeCropHandlers() {
     
     document.addEventListener('mousemove', function(e) {
         if (state.isDragging) {
-            handleDrag(e);
+            handleDrag(e.clientX, e.clientY);
         } else if (state.isResizing) {
-            handleResize(e);
+            handleResize(e.clientX, e.clientY);
         }
     });
     
@@ -215,7 +220,56 @@ export function initializeCropHandlers() {
         state.resizeHandle = null;
     });
     
-    // ALT key listeners
+    // Touch events for mobile/tablets
+    overlay.addEventListener('touchstart', function(e) {
+        if (e.target.classList.contains('crop-handle')) return;
+        
+        const touch = e.touches[0];
+        state.isDragging = true;
+        state.dragStart = { 
+            x: touch.clientX - state.cropData.x, 
+            y: touch.clientY - state.cropData.y 
+        };
+        e.preventDefault();
+        e.stopPropagation();
+    }, { passive: false });
+    
+    handles.forEach(handle => {
+        handle.addEventListener('touchstart', function(e) {
+            const touch = e.touches[0];
+            state.isResizing = true;
+            state.resizeHandle = handle.classList[1];
+            state.dragStart = { x: touch.clientX, y: touch.clientY };
+            e.stopPropagation();
+            e.preventDefault();
+        }, { passive: false });
+    });
+    
+    document.addEventListener('touchmove', function(e) {
+        if (state.isDragging || state.isResizing) {
+            const touch = e.touches[0];
+            if (state.isDragging) {
+                handleDrag(touch.clientX, touch.clientY);
+            } else if (state.isResizing) {
+                handleResize(touch.clientX, touch.clientY);
+            }
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    document.addEventListener('touchend', function() {
+        state.isDragging = false;
+        state.isResizing = false;
+        state.resizeHandle = null;
+    });
+    
+    document.addEventListener('touchcancel', function() {
+        state.isDragging = false;
+        state.isResizing = false;
+        state.resizeHandle = null;
+    });
+    
+    // Keyboard support for ALT key (desktop only)
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Alt') {
             state.isAltKeyPressed = true;
@@ -230,7 +284,7 @@ export function initializeCropHandlers() {
     });
 }
 
-function handleDrag(e) {
+function handleDrag(clientX, clientY) {
     const image = document.getElementById('cropImage');
     const imgRect = image.getBoundingClientRect();
     const container = document.getElementById('cropContainer');
@@ -241,8 +295,8 @@ function handleDrag(e) {
     const imgRight = imgLeft + imgRect.width;
     const imgBottom = imgTop + imgRect.height;
     
-    let newX = e.clientX - state.dragStart.x;
-    let newY = e.clientY - state.dragStart.y;
+    let newX = clientX - state.dragStart.x;
+    let newY = clientY - state.dragStart.y;
     
     newX = Math.max(imgLeft, Math.min(newX, imgRight - state.cropData.width));
     newY = Math.max(imgTop, Math.min(newY, imgBottom - state.cropData.height));
@@ -251,10 +305,9 @@ function handleDrag(e) {
     state.cropData.y = newY;
     
     updateCropOverlay();
-    updateCropInfo();
 }
 
-function handleResize(e) {
+function handleResize(clientX, clientY) {
     const image = document.getElementById('cropImage');
     const imgRect = image.getBoundingClientRect();
     const container = document.getElementById('cropContainer');
@@ -267,8 +320,8 @@ function handleResize(e) {
     
     const targetRatio = state.selectedResolution.width / state.selectedResolution.height;
     
-    const deltaX = e.clientX - state.dragStart.x;
-    const deltaY = e.clientY - state.dragStart.y;
+    const deltaX = clientX - state.dragStart.x;
+    const deltaY = clientY - state.dragStart.y;
     
     let newWidth = state.cropData.width;
     let newHeight = state.cropData.height;
@@ -310,10 +363,12 @@ function handleResize(e) {
         }
     }
     
+    // Enforce minimum size
     const minSize = 50;
     newWidth = Math.max(minSize, newWidth);
     newHeight = newWidth / targetRatio;
     
+    // Keep crop within image bounds
     if (newX < imgLeft) { 
         newWidth = state.cropData.width + (state.cropData.x - imgLeft);
         newHeight = newWidth / targetRatio;
@@ -333,6 +388,7 @@ function handleResize(e) {
         newWidth = newHeight * targetRatio;
     }
     
+    // Prevent crop from exceeding image dimensions
     if (newWidth > imgWidth || newHeight > imgHeight) {
         if (imgWidth / imgHeight > targetRatio) {
             newHeight = imgHeight;
@@ -350,10 +406,9 @@ function handleResize(e) {
     state.cropData.width = newWidth;
     state.cropData.height = newHeight;
     
-    state.dragStart = { x: e.clientX, y: e.clientY };
+    state.dragStart = { x: clientX, y: clientY };
     
     updateCropOverlay();
-    updateCropInfo();
 }
 
 export async function applyCrop() {
@@ -410,12 +465,10 @@ export async function applyCrop() {
             sizeMB: Math.round(croppedImage.length / 1024 / 1024 * 10) / 10
         });
         
-        // Update preview and show re-crop button
         document.getElementById('imagePreview').src = state.selectedImage;
         document.getElementById('imagePreview').style.display = 'block';
         document.getElementById('recropButton').style.display = 'inline-block';
         
-        // Final update of resolution display in sidebar
         const res = state.selectedResolution;
         document.getElementById('selectedTier').textContent = res.tier;
         document.getElementById('selectedTier').className = `resolution-badge badge-${res.tier}`;
