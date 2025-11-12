@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WAN 2.2 Video Generator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <button class="hamburger-button" id="hamburgerButton" onclick="toggleSidebar()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <h1 class="app-title"><i class="fa-solid fa-video"></i> WAN 2.2 Video Generator</h1>
+            <div class="header-actions">
+                <span id="healthIndicator"></span>
+                <button class="settings-button" onclick="openSettings()">
+                    <i class="fa-solid fa-gear"></i> Settings
+                </button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <aside class="generation-panel" id="generationPanel">
+                <div class="sidebar-content">
+                    <h2 class="panel-title"><i class="fa-solid fa-wand-magic-sparkles"></i> Generate Video</h2>
+                    <form id="generationForm" onsubmit="handleSubmit(event)">
+                        <div class="form-group">
+                            <label class="form-label" for="imageInput">
+                                <i class="fa-solid fa-image"></i> Starting Image
+                            </label>
+                            <div class="file-input-wrapper">
+                                <label class="file-input-label" for="imageInput">
+                                    <span id="fileLabel">
+                                        <i class="fa-solid fa-folder-open"></i> Click to select image
+                                    </span>
+                                </label>
+                                <input type="file" id="imageInput" class="file-input-hidden" accept="image/*" onchange="handleImageSelect(event)">
+                            </div>
+                            <img id="imagePreview" class="image-preview" alt="Preview">
+                            <button type="button" id="recropButton" class="recrop-button" onclick="openCropModal()">
+                                <i class="fa-solid fa-crop"></i> Re-crop Image
+                            </button>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fa-solid fa-display"></i> Selected Resolution
+                            </label>
+                            <div class="resolution-display">
+                                <span class="resolution-badge badge-draft" id="selectedTier">draft</span>
+                                <span class="resolution-value" id="selectedResolution">480×832</span>
+                                <span class="resolution-aspect" id="selectedAspect">portrait</span>
+                            </div>
+                            <p class="form-hint">
+                                <i class="fa-solid fa-lightbulb"></i> Change resolution while cropping the image
+                            </p>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="positivePrompt">
+                                <i class="fa-solid fa-comment"></i> Positive Prompt
+                            </label>
+                            <textarea id="positivePrompt" class="form-textarea" placeholder="Describe what you want to see..." required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="negativePrompt">
+                                <i class="fa-solid fa-ban"></i> Negative Prompt
+                            </label>
+                            <textarea id="negativePrompt" class="form-textarea" placeholder="Describe what you don't want to see..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fa-solid fa-sliders"></i> Advanced Parameters
+                            </label>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                                <div>
+                                    <label class="form-label" style="font-size: 0.75rem; margin-bottom: 0.25rem;">
+                                        <i class="fa-solid fa-film"></i> Video Length (frames)
+                                    </label>
+                                    <input type="number" id="videoLength" class="form-input" value="81" min="1" max="200" step="1">
+                                </div>
+                                <div>
+                                    <label class="form-label" style="font-size: 0.75rem; margin-bottom: 0.25rem;">
+                                        <i class="fa-solid fa-stairs"></i> Steps
+                                    </label>
+                                    <input type="number" id="videoSteps" class="form-input" value="10" min="1" max="50" step="1">
+                                </div>
+                                <div>
+                                    <label class="form-label" style="font-size: 0.75rem; margin-bottom: 0.25rem;">
+                                        <i class="fa-solid fa-dice"></i> Seed
+                                    </label>
+                                    <input type="number" id="videoSeed" class="form-input" value="42" min="0" max="999999" step="1">
+                                </div>
+                                <div>
+                                    <label class="form-label" style="font-size: 0.75rem; margin-bottom: 0.25rem;">
+                                        <i class="fa-solid fa-gauge-high"></i> CFG Scale
+                                    </label>
+                                    <input type="number" id="videoCfg" class="form-input" value="2.0" min="0" max="20" step="0.1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <input type="checkbox" id="useAdditionalLora" onchange="toggleLoraSection()" style="margin-right: 0.5rem;">
+                                <i class="fa-solid fa-puzzle-piece"></i> Use Additional LORA (Optional)
+                            </label>
+                            <div id="loraSection" style="display: none; margin-top: 1rem;">
+                                <div id="loraPairsContainer"></div>
+                                <button type="button" class="crop-button" onclick="addLoraPair()" id="addLoraButton" style="display: block; width: 100%; margin-top: 0.5rem;">
+                                    <i class="fa-solid fa-plus"></i> Add LORA Pair (Max 4)
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="sidebar-footer">
+                    <button type="submit" form="generationForm" class="submit-button" id="submitButton">
+                        <i class="fa-solid fa-play"></i> Generate Video
+                    </button>
+                </div>
+            </aside>
+
+            <section class="queue-panel" id="queuePanel">
+                <div class="queue-panel-header">
+                    <div class="queue-panel-title-row">
+                        <h2 class="panel-title">
+                            <i class="fa-solid fa-list"></i> Generation Queue
+                        </h2>
+                        <div class="queue-header-actions">
+                            <button class="queue-action-btn queue-action-clear" onclick="clearCompletedItems()">
+                                <i class="fa-solid fa-trash"></i> Clear Completed
+                            </button>
+                            <button class="queue-action-btn queue-action-cancel-all" onclick="cancelAllJobs()">
+                                <i class="fa-solid fa-circle-xmark"></i> Cancel All
+                            </button>
+                        </div>
+                    </div>
+                    <div class="queue-stats" id="queueStats">
+                        <div class="queue-stat-item">
+                            <i class="fa-solid fa-spinner"></i>
+                            <span>Processing: <span class="queue-stat-value" id="processingCount">0</span></span>
+                        </div>
+                        <div class="queue-stat-item">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>Completed: <span class="queue-stat-value" id="completedCount">0</span></span>
+                        </div>
+                        <div class="queue-stat-item">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                            <span>Failed: <span class="queue-stat-value" id="failedCount">0</span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="queue-content">
+                    <div id="queueList" class="queue-list">
+                        <div class="empty-queue">
+                            <i class="fa-solid fa-inbox"></i>
+                            <div class="empty-queue-text">No generations yet</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title"><i class="fa-solid fa-gear"></i> Settings</h2>
+                <button class="modal-close" onclick="closeSettings()">&times;</button>
+            </div>
+            <form id="settingsForm" onsubmit="saveSettings(event)">
+                <div class="form-group">
+                    <label class="form-label" for="apiEndpoint">
+                        <i class="fa-solid fa-server"></i> API Endpoint
+                    </label>
+                    <input type="text" id="apiEndpoint" class="form-input" placeholder="https://api.runpod.ai/v2/your-endpoint" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="apiKey">
+                        <i class="fa-solid fa-key"></i> API Key
+                    </label>
+                    <input type="password" id="apiKey" class="form-input" placeholder="Bearer token" required>
+                </div>
+                <button type="submit" class="submit-button">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Settings
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="cropModal">
+        <div class="modal-content crop-modal crop-modal-fullscreen">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <i class="fa-solid fa-crop-simple"></i> Crop Image & Select Resolution
+                </h2>
+                <button class="modal-close" onclick="closeCropModal()">&times;</button>
+            </div>
+            <div class="crop-modal-body">
+                <div class="crop-controls-panel">
+                    <div class="crop-controls-content">
+                        <div class="crop-resolution-selector">
+                            <div class="crop-resolution-selector-title">
+                                <i class="fa-solid fa-ruler-combined"></i> Select Target Resolution
+                            </div>
+                            <div id="cropResolutionSelector">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <div class="crop-info">
+                            <strong><i class="fa-solid fa-gamepad"></i> Controls:</strong>
+                            • Drag to move crop area<br>
+                            • Drag corners to resize<br>
+                            • Hold <kbd>ALT</kbd> for symmetric resize
+                        </div>
+                        
+                        <div class="crop-stats" id="cropStats">
+                            <div class="crop-stat-row">
+                                <span><i class="fa-solid fa-bullseye"></i> Target:</span>
+                                <strong id="cropTargetRes">480×832</strong>
+                            </div>
+                            <div class="crop-stat-row">
+                                <span><i class="fa-solid fa-scissors"></i> Crop Area:</span>
+                                <strong id="cropCurrentSize">-</strong>
+                            </div>
+                            <div class="crop-stat-row">
+                                <span><i class="fa-solid fa-image"></i> Image Size:</span>
+                                <strong id="cropImageSize">-</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="crop-controls-footer">
+                        <div class="modal-actions">
+                            <button type="button" class="modal-button modal-button-secondary" onclick="closeCropModal()">
+                                <i class="fa-solid fa-xmark"></i> Cancel
+                            </button>
+                            <button type="button" class="modal-button modal-button-primary" onclick="applyCrop()">
+                                <i class="fa-solid fa-check"></i> Apply Crop
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="crop-container" id="cropContainer">
+                    <img id="cropImage" class="crop-image" alt="Image to crop">
+                    <div class="crop-overlay" id="cropOverlay">
+                        <div class="crop-handle handle-nw"></div>
+                        <div class="crop-handle handle-ne"></div>
+                        <div class="crop-handle handle-sw"></div>
+                        <div class="crop-handle handle-se"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
