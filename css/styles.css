@@ -148,7 +148,7 @@ body {
     top: var(--header-height);
     width: var(--sidebar-width);
     height: calc(100vh - var(--header-height));
-    height: calc(100dvh - var(--header-height)); /* Dynamic viewport height */
+    height: calc(100svh - var(--header-height)); /* Small viewport height */
     background-color: var(--surface-color);
     border-right: 1px solid var(--border-color);
     box-shadow: var(--shadow);
@@ -156,7 +156,7 @@ body {
     flex-direction: column;
     transition: transform 0.3s ease;
     z-index: 50;
-    overflow: hidden;
+    overflow: hidden; /* Important: prevent panel overflow */
 }
 
 .generation-panel.collapsed {
@@ -167,21 +167,20 @@ body {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 1rem; /* Reduced from 1.5rem */
-    padding-bottom: 80px; /* Reduced from 100px */
+    padding: 1rem;
+    padding-bottom: 0; /* Remove bottom padding */
     -webkit-overflow-scrolling: touch;
+    min-height: 0; /* Critical for flex scrolling */
 }
 
 .sidebar-footer {
-    position: sticky; /* Changed from absolute to sticky for better mobile support */
-    bottom: 0;
-    left: 0;
-    right: 0;
+    flex-shrink: 0; /* Prevent shrinking */
     padding: 0.75rem 1rem;
     background-color: var(--surface-color);
     border-top: 1px solid var(--border-color);
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
     z-index: 10;
+    position: relative; /* Changed from sticky */
 }
 
 /* Queue Panel - Main Content, Body-Level Scroll */
@@ -1067,7 +1066,7 @@ body {
 
 @media (max-width: 768px) {
     .app-header {
-        padding: 0 0.75rem; /* Reduced from 1rem */
+        padding: 0 0.75rem;
     }
     
     .hamburger-button {
@@ -1078,7 +1077,7 @@ body {
         width: 85vw;
         max-width: 400px;
         height: calc(100vh - var(--header-height));
-        height: calc(100dvh - var(--header-height));
+        height: calc(100svh - var(--header-height)); /* Use small viewport height */
     }
     
     .generation-panel:not(.collapsed) {
@@ -1087,15 +1086,18 @@ body {
     
     .sidebar-content {
         padding: 0.75rem;
-        padding-bottom: 0; /* Remove bottom padding, let footer be sticky */
+        padding-bottom: 0; /* No bottom padding */
         overflow-y: auto;
         overflow-x: hidden;
+        flex: 1; /* Take available space */
+        min-height: 0; /* Critical for scrolling */
     }
     
     .sidebar-footer {
-        position: sticky;
-        bottom: 0;
         padding: 0.625rem 0.75rem;
+        flex-shrink: 0; /* Never shrink */
+        position: relative; /* Not sticky - just sits at bottom of flex container */
+        bottom: auto;
     }
     
     .queue-panel {
@@ -1220,28 +1222,30 @@ body {
 
 @media (max-width: 480px) {
     .app-header {
-        padding: 0 0.5rem; /* Reduced from 0.75rem */
+        padding: 0 0.5rem;
     }
     
     .app-title {
-        font-size: 0.875rem; /* Reduced from 1rem */
+        font-size: 0.875rem;
     }
     
     .generation-panel {
         width: 90vw;
+        height: calc(100vh - var(--header-height));
+        height: calc(100svh - var(--header-height)); /* Use small viewport height */
     }
     
     .queue-panel {
-        padding: 0.5rem; /* Reduced from 0.75rem */
+        padding: 0.5rem;
     }
     
     .modal-content {
-        padding: 1rem; /* Reduced from 1.5rem */
+        padding: 1rem;
         width: 95%;
     }
     
     .form-group {
-        margin-bottom: 0.75rem; /* Reduced from 1rem */
+        margin-bottom: 0.75rem;
     }
     
     .queue-header-actions {
@@ -1257,16 +1261,17 @@ body {
     
     .queue-stats {
         width: 100%;
-        font-size: 0.75rem; /* Reduced */
+        font-size: 0.75rem;
     }
     
     .sidebar-content {
-        padding: 0.625rem; /* Reduced from 0.75rem */
-        padding-bottom: 0; /* Remove bottom padding */
+        padding: 0.625rem;
+        padding-bottom: 0; /* No bottom padding */
     }
     
     .sidebar-footer {
         padding: 0.5rem 0.625rem;
+        flex-shrink: 0;
     }
     
     /* Crop modal small mobile */
