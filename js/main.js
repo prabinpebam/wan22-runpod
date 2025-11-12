@@ -253,12 +253,27 @@ function setMobileViewportHeight() {
     // Get the actual viewport height
     const vh = window.innerHeight * 0.01;
     document.documentElement.style.setProperty('--vh', `${vh}px`);
+    
+    // Also update on orientation change
+    console.log(`Viewport height updated: ${window.innerHeight}px (--vh: ${vh}px)`);
 }
 
 // Set on load and resize
 window.addEventListener('load', setMobileViewportHeight);
 window.addEventListener('resize', setMobileViewportHeight);
-window.addEventListener('orientationchange', setMobileViewportHeight);
+window.addEventListener('orientationchange', () => {
+    // Add small delay for orientation change
+    setTimeout(setMobileViewportHeight, 100);
+});
+
+// Force update on touchstart (helps with iOS Safari)
+let touchStarted = false;
+document.addEventListener('touchstart', () => {
+    if (!touchStarted) {
+        touchStarted = true;
+        setMobileViewportHeight();
+    }
+}, { once: true });
 
 // ============================================
 // INITIALIZATION
