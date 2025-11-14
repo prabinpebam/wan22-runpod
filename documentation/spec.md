@@ -22,7 +22,11 @@
 
 # Layout update
 - Make generation panel a docked left panel with the generate buttone fixed/sticky at the bottom.
+    - Make the left panel scrollable within itself 
 - Queue is the main content
+    - Queue scroll is at the body level.
+- Have a strategy to support lower resolution screen and mobile screen. Make it responsive layout.
+- The left panel collapses with animation to a hamburger icon for lower resolution screens.
 
 
 
