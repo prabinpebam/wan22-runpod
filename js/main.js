@@ -312,6 +312,106 @@ window.addEventListener('orientationchange', setMobileViewportHeight);
 setMobileViewportHeight();
 
 // ============================================
+// DRAG AND DROP / PASTE IMAGE UPLOAD
+// ============================================
+
+function initializeImageUpload() {
+    // Prevent default drag behaviors on the entire document
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        document.body.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    // Highlight entire page when dragging over
+    ['dragenter', 'dragover'].forEach(eventName => {
+        document.body.addEventListener(eventName, () => {
+            document.body.classList.add('drag-over');
+        }, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        document.body.addEventListener(eventName, () => {
+            document.body.classList.remove('drag-over');
+        }, false);
+    });
+    
+    // Handle dropped files anywhere on the page
+    document.body.addEventListener('drop', handleDrop, false);
+    
+    // Handle paste events
+    document.addEventListener('paste', handlePaste, false);
+}
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    
+    if (files.length > 0) {
+        handleImageFile(files[0]);
+    }
+}
+
+function handlePaste(e) {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    
+    for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+            const file = items[i].getAsFile();
+            if (file) {
+                handleImageFile(file);
+                e.preventDefault();
+                break;
+            }
+        }
+    }
+}
+
+function handleImageFile(file) {
+    if (!file.type.startsWith('image/')) {
+        alert('Please drop/paste a valid image file');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        // Store the original uncropped image
+        state.originalImage = e.target.result;
+        state.selectedImage = null; // Clear any previously selected image
+        
+        // Load image into crop modal
+        const cropImage = document.getElementById('cropImage');
+        if (cropImage) {
+            cropImage.src = state.originalImage;
+            cropImage.onload = function() {
+                // Open crop modal after image is loaded
+                cropModule.openCropModal();
+            };
+        }
+        
+        // Show a brief notification
+        showImageUploadNotification();
+    };
+    reader.readAsDataURL(file);
+}
+
+function showImageUploadNotification() {
+    const notification = document.createElement('div');
+    notification.className = 'upload-notification';
+    notification.textContent = '✓ Image uploaded - Please crop';
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.add('fade-out');
+        setTimeout(() => notification.remove(), 300);
+    }, 2000);
+}
+
+// ============================================
 // INITIALIZATION
 // ============================================
 
@@ -323,6 +423,9 @@ function initializeApp() {
     
     // Initialize sidebar state IMMEDIATELY
     initializeSidebarState();
+    
+    // Initialize image upload handlers
+    initializeImageUpload();
     
     settingsModule.loadSettings();
     queueModule.loadQueue();
