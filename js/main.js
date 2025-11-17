@@ -412,59 +412,87 @@ function showImageUploadNotification() {
 }
 
 // ============================================
+// THEME MANAGEMENT
+// ============================================
+
+const THEME_STORAGE_KEY = 'wan22_theme';
+const prefersDarkMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+function applyTheme(theme, persist = true) {
+    const normalized = theme === 'dark' ? 'dark' : 'light';
+    state.theme = normalized;
+    document.documentElement.setAttribute('data-theme', normalized);
+    if (persist) localStorage.setItem(THEME_STORAGE_KEY, normalized);
+    const toggle = document.getElementById('themeToggle');
+    if (toggle) {
+        toggle.checked = normalized === 'dark';
+        toggle.setAttribute(
+            'aria-label',
+            normalized === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'
+        );
+    }
+}
+
+const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+applyTheme(savedTheme || (prefersDarkMediaQuery.matches ? 'dark' : 'light'), false);
+
+prefersDarkMediaQuery.addEventListener('change', (event) => {
+    if (!localStorage.getItem(THEME_STORAGE_KEY)) {
+        applyTheme(event.matches ? 'dark' : 'light', false);
+    }
+});
+
+function initializeThemeToggle() {
+    const toggle = document.getElementById('themeToggle');
+    if (!toggle || toggle.dataset.bound) return;
+    toggle.checked = state.theme === 'dark';
+    toggle.addEventListener('change', () => applyTheme(toggle.checked ? 'dark' : 'light'));
+    toggle.dataset.bound = 'true';
+}
+
+// ============================================
 // INITIALIZATION
 // ============================================
 
 function initializeApp() {
     console.log('Initializing app...');
-    
-    // Set viewport height first
+
     setMobileViewportHeight();
-    
-    // Initialize sidebar state IMMEDIATELY
     initializeSidebarState();
-    
-    // Initialize image upload handlers
+    initializeThemeToggle();
     initializeImageUpload();
-    
+
     settingsModule.loadSettings();
     queueModule.loadQueue();
     queueModule.resumeQueuePolling();
     cropModule.initializeCropHandlers();
-    
+
     if (state.apiConfig.endpoint && state.apiConfig.apiKey) {
         healthModule.startHealthCheck();
     }
-    
-    // Update queue display every second for elapsed time
+
     setInterval(() => {
         if (state.generationQueue.some(item => item.status === 'processing')) {
             queueModule.renderQueue();
         }
     }, 1000);
-    
-    // Mark app as ready (shows panels with fade-in)
-    // Use requestAnimationFrame to ensure all layout is complete
+
     requestAnimationFrame(() => {
         document.body.classList.add('app-ready');
         console.log('App ready - panels visible');
     });
-    
+
     console.log('App initialized successfully');
 }
 
-// Ensure panels become visible even if initialization is delayed
 window.addEventListener('load', () => {
     if (!document.body.classList.contains('app-ready')) {
         document.body.classList.add('app-ready');
     }
 });
 
-// Initialize as early as possible
 if (document.readyState === 'loading') {
-    // DOM still loading
     document.addEventListener('DOMContentLoaded', initializeApp);
 } else {
-    // DOM already loaded (script is deferred/async or at end)
     initializeApp();
 }

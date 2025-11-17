@@ -164,7 +164,6 @@
     flex: 1;
     margin-left: var(--sidebar-width);
     padding: 0;
-    background: linear-gradient(180deg, #f6f3ee 0%, #f0ece5 100%);
     border-left: none;
     overflow-y: auto;
     overflow-x: hidden;
@@ -265,4 +264,77 @@
 
 .queue-content {
     padding: var(--space-xl) var(--layout-gutter);
+}
+
+.theme-toggle {
+    position: relative;
+    width: 88px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: var(--space-xs);
+}
+
+.theme-toggle-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.theme-toggle-slider {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 999px;
+    border: 2px solid var(--border-strong);
+    background: linear-gradient(120deg, #fffdf6, #ece7dd);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    box-sizing: border-box;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+    transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+}
+
+:root[data-theme='dark'] .theme-toggle-slider {
+    background: linear-gradient(120deg, #0f172a, #1e293b);
+    border-color: var(--primary-color);
+    box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.25);
+}
+
+.theme-toggle-icon {
+    font-size: 0.85rem;
+    color: var(--border-strong);
+    opacity: 0.35;
+    pointer-events: none;
+    transition: color 0.3s ease, opacity 0.3s ease;
+}
+
+.theme-toggle-thumb {
+    position: absolute;
+    top: 4px;
+    left: 48px;
+    width: 32px;
+    height: calc(100% - 8px);
+    border-radius: 999px;
+    background: var(--border-strong);
+    box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+    transform: translateX(0);
+    transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.theme-toggle-input:checked + .theme-toggle-slider .theme-toggle-thumb {
+    transform: translateX(calc(100% - 75px));
+    background: var(--primary-color);
+    box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.25);
+}
+
+.theme-toggle-input:checked + .theme-toggle-slider .theme-toggle-icon-moon,
+.theme-toggle-input:not(:checked) + .theme-toggle-slider .theme-toggle-icon-sun {
+    opacity: 1;
+    color: var(--primary-color);
 }

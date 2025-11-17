@@ -13,5 +13,6 @@ export const state = {
     apiConfig: { endpoint: '', apiKey: '' },
     healthCheckInterval: null,
     apiHealth: { status: 'unknown', workers: { ready: 0, running: 0 } },
-    downloadedJobs: new Set()
+    downloadedJobs: new Set(),
+    theme: 'light'
 };
