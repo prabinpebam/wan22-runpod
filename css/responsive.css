@@ -78,10 +78,17 @@
         padding: 0;
         display: flex;
         flex-direction: column;
+        gap: 0;
     }
 
     .modal-content.crop-modal .modal-header {
-        padding: var(--space-md);
+        padding: 0 var(--space-sm) 0 var(--space-md);
+        min-height: 36px;
+    }
+
+    .modal-content.crop-modal .modal-title {
+        font-size: 0.85rem;
+        letter-spacing: 0.04em;
     }
 
     .crop-modal-fullscreen {
@@ -99,22 +106,54 @@
 
     .crop-modal-fullscreen .crop-container {
         order: 1;
-        flex: 0 0 auto;
-        padding: var(--space-md);
-        min-height: 50vh;
-        max-height: none;
+        flex: 0 0 60%;
+        max-height: 60%;
+        min-height: 45%;
+        padding: var(--space-sm);
     }
 
-    .crop-controls-panel {
+    .crop-modal-fullscreen .crop-controls-panel {
         order: 2;
-        flex: 0 0 auto;
-        width: 100%;
-        min-width: 0;
-        border-right: none;
-        border-top: 1px solid var(--border-color);
-        max-height: none;
-        overflow: visible;
-        background-color: var(--surface-color);
+        flex: 1;
+        padding: var(--space-sm) var(--space-md);
+        gap: var(--space-sm);
+    }
+
+    .crop-controls-panel .crop-resolution-selector-title {
+        font-size: 0.7rem;
+        letter-spacing: 0.06em;
+    }
+
+    #cropResolutionSelector {
+        gap: clamp(2px, var(--space-xs), 1rem);
+    }
+
+    .crop-resolution-btn {
+        padding: 0.4rem 0.5rem;
+        font-size: 0.6rem;
+        min-height: 32px;
+    }
+
+    .crop-resolution-btn .resolution-badge {
+        display: none;
+    }
+
+    .modal-actions {
+        gap: var(--space-xs);
+    }
+
+    .modal-actions .modal-button {
+        width: var(--icon-button-size);
+        min-width: var(--icon-button-size);
+        height: var(--icon-button-size);
+        padding: 0;
+        border-radius: 999px;
+        font-size: 0;
+    }
+
+    .modal-actions .modal-button i {
+        margin: 0;
+        font-size: 1.15rem;
     }
 
     body.drag-over::after {
