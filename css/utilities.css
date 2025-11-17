@@ -1,0 +1,71 @@
+body.drag-over::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(76, 175, 80, 0.15);
+    border: 4px dashed #4CAF50;
+    z-index: 9998;
+    pointer-events: none;
+}
+
+body.drag-over::after {
+    content: '📁 Drop image anywhere to upload';
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 32px;
+    color: #4CAF50;
+    font-weight: bold;
+    z-index: 9999;
+    pointer-events: none;
+    background: rgba(0, 0, 0, 0.9);
+    padding: 40px 60px;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    text-align: center;
+    line-height: 1.4;
+    background: rgba(255, 107, 0, 0.92);
+    color: #111;
+    border-radius: var(--radius-md);
+}
+
+.upload-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #4CAF50;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 10000;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    animation: slideIn 0.3s ease-out;
+}
+
+.upload-notification.fade-out {
+    animation: fadeOut 0.3s ease-out forwards;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
