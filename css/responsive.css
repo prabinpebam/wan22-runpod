@@ -8,7 +8,6 @@
     }
 
     .crop-controls-panel {
-        width: 280px;
         min-width: 280px;
     }
 
@@ -121,6 +120,10 @@
     body.drag-over::after {
         font-size: 20px;
         padding: 30px 40px;
+    }
+
+    .app-title {
+        display: none;
     }
 }
 
