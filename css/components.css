@@ -40,6 +40,47 @@
     min-height: 80px;
 }
 
+.seed-input-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.seed-lock-btn {
+    flex: 0 0 44px;
+    height: 44px;
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.seed-lock-btn:hover {
+    border-color: var(--text-primary);
+    color: var(--text-primary);
+}
+
+.seed-lock-btn.active {
+    background: var(--surface-color);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.form-input:disabled {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+    border-color: transparent;
+}
+
+:root[data-theme='dark'] .form-input:disabled {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
 .file-input-wrapper {
     position: relative;
     overflow: hidden;

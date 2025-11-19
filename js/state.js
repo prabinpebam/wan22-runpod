@@ -14,5 +14,6 @@ export const state = {
     healthCheckInterval: null,
     apiHealth: { status: 'unknown', workers: { ready: 0, running: 0 } },
     downloadedJobs: new Set(),
-    theme: 'light'
+    theme: 'light',
+    isSeedLocked: false
 };

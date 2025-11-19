@@ -274,7 +274,12 @@
                                     <label class="form-label" style="font-size: 0.75rem; margin-bottom: 0.25rem;">
                                         <i class="fa-solid fa-dice"></i> Seed
                                     </label>
-                                    <input type="number" id="videoSeed" class="form-input" value="42" min="0" max="999999" step="1">
+                                    <div class="seed-input-group">
+                                        <input type="number" id="videoSeed" class="form-input" value="" min="0" max="999999" step="1">
+                                        <button type="button" id="seedLockBtn" class="seed-lock-btn" onclick="toggleSeedLock()" title="Lock Seed">
+                                            <i class="fa-solid fa-lock-open"></i>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div>
                                     <label class="form-label" style="font-size: 0.75rem; margin-bottom: 0.25rem;">

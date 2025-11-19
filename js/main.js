@@ -34,10 +34,32 @@ window.cancelAllJobs = cancelAllJobs;
 window.toggleSidebar = toggleSidebar;
 window.remixJob = remixJob;
 window.copyPrompt = copyPrompt;
+window.toggleSeedLock = toggleSeedLock;
 
 // ============================================
 // FORM SUBMISSION
 // ============================================
+
+function generateRandomSeed() {
+    return Math.floor(Math.random() * 1000000);
+}
+
+function toggleSeedLock() {
+    state.isSeedLocked = !state.isSeedLocked;
+    const btn = document.getElementById('seedLockBtn');
+    const icon = btn.querySelector('i');
+    const input = document.getElementById('videoSeed');
+    
+    if (state.isSeedLocked) {
+        icon.className = 'fa-solid fa-lock';
+        btn.classList.add('active');
+        input.disabled = true;
+    } else {
+        icon.className = 'fa-solid fa-lock-open';
+        btn.classList.remove('active');
+        input.disabled = false;
+    }
+}
 
 async function handleSubmit(event) {
     event.preventDefault();
@@ -75,6 +97,11 @@ async function handleSubmit(event) {
     };
 
     await apiModule.submitGeneration(formData);
+
+    // Generate new seed if not locked
+    if (!state.isSeedLocked) {
+        document.getElementById('videoSeed').value = generateRandomSeed();
+    }
 }
 
 // ============================================
@@ -564,6 +591,9 @@ function initializeApp() {
     initializeSidebarState();
     initializeThemeToggle();
     initializeImageUpload();
+
+    // Initialize Seed
+    document.getElementById('videoSeed').value = generateRandomSeed();
 
     settingsModule.loadSettings();
     queueModule.loadQueue();
