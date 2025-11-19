@@ -16,6 +16,166 @@
     <!-- Option 2: Keep CDN but accept tracking prevention -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* Queue Item Redesign */
+        .queue-item {
+            background: var(--bg-card, #ffffff);
+            border: 1px solid var(--border-color, #e2e8f0);
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-card: #1e293b;
+                --bg-subtle: rgba(0,0,0,0.2);
+                --border-color: #334155;
+                --text-primary: #f8fafc;
+                --text-secondary: #94a3b8;
+                --accent-color: #3b82f6;
+            }
+        }
+        
+        /* Explicit dark mode class support */
+        body.dark-mode .queue-item, 
+        [data-theme="dark"] .queue-item {
+            background: #1e293b;
+            border-color: #334155;
+            --bg-subtle: rgba(0,0,0,0.2);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+        }
+
+        .queue-item:hover {
+            border-color: var(--accent-color, #3b82f6);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: none !important; /* Prevent movement */
+        }
+
+        /* Header */
+        .queue-item-header {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: var(--bg-subtle, #f8fafc);
+            border-bottom: 1px solid var(--border-color, #e2e8f0);
+            gap: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .queue-item-id {
+            font-family: monospace;
+            font-weight: 600;
+            color: var(--text-secondary, #64748b);
+        }
+
+        .queue-item-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+        }
+
+        .queue-item-actions {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .queue-action-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary, #64748b);
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            transition: all 0.2s;
+            font-size: 0.8rem;
+        }
+        .queue-action-btn:hover {
+            background: var(--bg-subtle, rgba(0,0,0,0.05));
+            color: var(--accent-color, #3b82f6);
+        }
+
+        /* Body Layout */
+        .queue-item-body {
+            display: grid;
+            grid-template-columns: 1fr 240px; /* Prompts | Params */
+            gap: 1.5rem;
+            padding: 1.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .queue-item-body {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Prompts Column */
+        .queue-item-prompts {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .prompt-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .prompt-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 700;
+            color: var(--text-secondary, #94a3b8);
+        }
+
+        .prompt-text {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: var(--text-primary, #1e293b);
+        }
+        body.dark-mode .prompt-text,
+        [data-theme="dark"] .prompt-text {
+            color: #f1f5f9;
+        }
+
+        /* Parameters Column */
+        .queue-item-params {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            align-content: start;
+            background: var(--bg-subtle, #f8fafc);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color, #e2e8f0);
+        }
+
+        .param-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .param-value {
+            font-family: monospace;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-primary, #334155);
+        }
+        body.dark-mode .param-value,
+        [data-theme="dark"] .param-value {
+            color: #e2e8f0;
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -262,6 +422,64 @@
             </div>
         </div>
     </div>
+
+    <!-- Template for Queue Item Structure -->
+    <template id="queueItemTemplate">
+        <div class="queue-item">
+            <div class="queue-item-header">
+                <div class="queue-item-id">#ID</div>
+                <div class="queue-item-status">
+                    <span class="status-text">Status</span>
+                </div>
+                <div class="queue-item-actions">
+                    <span class="time-ago">Time</span>
+                    <button class="queue-action-btn" title="Download">
+                        <i class="fa-solid fa-download"></i>
+                    </button>
+                    <button class="queue-action-btn" title="Remix">
+                        <i class="fa-solid fa-rotate"></i>
+                    </button>
+                    <button class="queue-action-btn" title="Delete">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="queue-item-body">
+                <div class="queue-item-prompts">
+                    <div class="prompt-group">
+                        <span class="prompt-label"><i class="fa-solid fa-comment"></i> Prompt</span>
+                        <div class="prompt-text">Positive Prompt Text</div>
+                    </div>
+                    <div class="prompt-group">
+                        <span class="prompt-label"><i class="fa-solid fa-ban"></i> Negative</span>
+                        <div class="prompt-text">Negative Prompt Text</div>
+                    </div>
+                </div>
+                <div class="queue-item-params">
+                    <div class="param-group">
+                        <span class="prompt-label">Resolution</span>
+                        <span class="param-value">832x480</span>
+                    </div>
+                    <div class="param-group">
+                        <span class="prompt-label">Frames</span>
+                        <span class="param-value">81</span>
+                    </div>
+                    <div class="param-group">
+                        <span class="prompt-label">Steps</span>
+                        <span class="param-value">20</span>
+                    </div>
+                    <div class="param-group">
+                        <span class="prompt-label">CFG</span>
+                        <span class="param-value">2.0</span>
+                    </div>
+                    <div class="param-group">
+                        <span class="prompt-label">Seed</span>
+                        <span class="param-value">123456</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
 
     <script type="module" src="js/main.js"></script>
 </body>
