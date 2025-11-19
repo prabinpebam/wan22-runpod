@@ -22,138 +22,96 @@ export function renderQueue() {
         
         if (item.status === 'processing' && item.startTime) {
             const elapsed = getElapsedTime(item.startTime);
-            timeDisplay = `
-                <div class="queue-item-time">
-                    <i class="fa-solid fa-clock"></i>
-                    <span>${formatDuration(elapsed)}</span>
-                </div>
-            `;
-        } else if (item.status === 'completed' && item.startTime && item.endTime) {
+            timeDisplay = `<span class="time-tag">${formatDuration(elapsed)}</span>`;
+        } else if ((item.status === 'completed' || item.status === 'failed') && item.startTime && item.endTime) {
             const totalTime = item.endTime - item.startTime;
-            timeDisplay = `
-                <div class="queue-item-time">
-                    <i class="fa-solid fa-circle-check"></i>
-                    <span>${formatDuration(totalTime)}</span>
-                </div>
-            `;
-        } else if (item.status === 'failed' && item.startTime && item.endTime) {
-            const totalTime = item.endTime - item.startTime;
-            timeDisplay = `
-                <div class="queue-item-time">
-                    <i class="fa-solid fa-circle-xmark"></i>
-                    <span>${formatDuration(totalTime)}</span>
-                </div>
-            `;
+            timeDisplay = `<span class="time-tag">${formatDuration(totalTime)}</span>`;
         }
         
         const params = item.retryData || {};
+        const isDownloaded = state.downloadedJobs.has(item.id);
         
         return `
             <div class="queue-item ${item.status}">
                 <div class="queue-item-header">
-                    <div class="queue-item-header-left">
-                        <span class="queue-item-id">
-                            <i class="fa-solid fa-hashtag"></i>${item.id.substring(0, 8)}
-                        </span>
-                        <span class="queue-item-status status-${item.status}">
-                            ${item.status === 'processing' ? '<i class="fa-solid fa-spinner fa-spin"></i>' : ''} 
+                    <div class="queue-header-left">
+                        <span class="queue-id">#${item.id.substring(0, 6)}</span>
+                        <span class="queue-status status-${item.status}">
+                            ${item.status === 'processing' ? '<i class="fa-solid fa-spinner fa-spin"></i>' : ''}
                             ${item.status}
                         </span>
                     </div>
-                    <div class="queue-item-header-right">
+                    <div class="queue-header-right">
                         ${timeDisplay}
-                    </div>
-                </div>
-                
-                <div class="queue-item-body">
-                    <div class="queue-item-section prompt-section">
-                        <div class="queue-section-label">Prompt</div>
-                        <div class="queue-prompt-container">
-                            <div class="queue-item-prompt full-text">${escapeHtml(item.prompt)}</div>
-                            <button class="copy-prompt-btn" onclick="copyPrompt('${escapeHtml(item.prompt).replace(/'/g, "\\'")}', this)" title="Copy Prompt">
-                                <i class="fa-regular fa-copy"></i>
-                            </button>
-                        </div>
-                        ${params.negativePrompt ? `
-                            <div class="queue-section-label" style="margin-top: 0.5rem;">Negative Prompt</div>
-                            <div class="queue-item-prompt negative-prompt full-text">${escapeHtml(params.negativePrompt)}</div>
-                        ` : ''}
-                    </div>
-
-                    <div class="queue-item-section params-section">
-                        <div class="queue-section-label">Parameters</div>
-                        <div class="params-grid">
-                            <div class="param-item">
-                                <span class="param-label">Resolution</span>
-                                <span class="param-value">${item.resolution || (params.width ? `${params.width}×${params.height}` : 'N/A')}</span>
-                            </div>
-                            <div class="param-item">
-                                <span class="param-label">Length</span>
-                                <span class="param-value">${item.frames || params.length || 'N/A'}</span>
-                            </div>
-                            <div class="param-item">
-                                <span class="param-label">Steps</span>
-                                <span class="param-value">${params.steps || 'N/A'}</span>
-                            </div>
-                            <div class="param-item">
-                                <span class="param-label">CFG</span>
-                                <span class="param-value">${params.cfg || 'N/A'}</span>
-                            </div>
-                            <div class="param-item">
-                                <span class="param-label">Seed</span>
-                                <span class="param-value">${params.seed || 'N/A'}</span>
-                            </div>
-                             ${params.loraPairs && params.loraPairs.length ? `
-                                <div class="param-item">
-                                    <span class="param-label">LoRAs</span>
-                                    <span class="param-value">${params.loraPairs.length} active</span>
-                                </div>
+                        <div class="queue-actions">
+                            ${item.status === 'completed' ? `
+                                <button class="queue-btn" title="${isDownloaded ? 'Downloaded' : 'Download Status'}" style="${isDownloaded ? 'color: var(--success-color)' : ''}">
+                                    <i class="fa-solid ${isDownloaded ? 'fa-circle-check' : 'fa-download'}"></i>
+                                </button>
                             ` : ''}
+                            <button class="queue-btn" onclick="remixJob('${item.id}')" title="Remix Parameters">
+                                <i class="fa-solid fa-sliders"></i>
+                            </button>
+                            ${item.status === 'processing' ? `
+                                <button class="queue-btn" onclick="cancelJob('${item.id}')" title="Cancel Generation">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            ` : `
+                                <button class="queue-btn" onclick="cancelJob('${item.id}', true)" title="Remove from Queue">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            `}
                         </div>
                     </div>
                 </div>
                 
                 ${item.status === 'processing' ? `
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${item.progress}%"></div>
-                    </div>
-                ` : ''}
-                
-                ${item.status === 'completed' ? `
-                    <div class="queue-item-success-message">
-                        <i class="fa-solid fa-circle-check"></i>
-                        <span>Video downloaded successfully</span>
-                    </div>
-                ` : ''}
-                
-                ${item.status === 'failed' ? `
-                    <div class="queue-item-error-message">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-                        <strong>Error:</strong> ${escapeHtml(item.error || 'Unknown error')}
-                    </div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: ${item.progress}%"></div></div>
                 ` : ''}
 
-                <div class="queue-item-actions">
-                    ${item.status === 'processing' ? `
-                        <button class="action-button action-button-cancel" onclick="cancelJob('${item.id}')">
-                            <i class="fa-solid fa-xmark"></i>
-                            <span class="button-text">Cancel</span>
-                        </button>
-                    ` : ''}
-                    
-                    ${item.retryData ? `
-                        <button class="action-button" onclick="remixJob('${item.id}')">
-                            <i class="fa-solid fa-sliders"></i>
-                            <span class="button-text">Remix</span>
-                        </button>
-                    ` : ''}
-                    
-                    ${item.status === 'failed' && item.retryData ? `
-                        <button class="action-button action-button-retry" onclick="retryJob('${item.id}')">
-                            <i class="fa-solid fa-rotate-right"></i>
-                            <span class="button-text">Retry</span>
-                        </button>
-                    ` : ''}
+                <div class="queue-item-body">
+                    <div class="queue-prompts">
+                        <div class="prompt-block">
+                            <span class="prompt-label">Prompt</span>
+                            <div class="prompt-text" onclick="copyPrompt('${escapeHtml(item.prompt).replace(/'/g, "\\'")}', this)" title="Click to copy">${escapeHtml(item.prompt)}</div>
+                        </div>
+                        ${params.negativePrompt ? `
+                            <div class="prompt-block">
+                                <span class="prompt-label">Negative</span>
+                                <div class="prompt-text negative">${escapeHtml(params.negativePrompt)}</div>
+                            </div>
+                        ` : ''}
+                        ${item.error ? `<div class="error-msg"><i class="fa-solid fa-triangle-exclamation"></i> ${escapeHtml(item.error)}</div>` : ''}
+                    </div>
+
+                    <div class="queue-params">
+                        <div class="param-cell">
+                            <span class="param-label">Res</span>
+                            <span class="param-value">${item.resolution || (params.width ? `${params.width}x${params.height}` : 'N/A')}</span>
+                        </div>
+                        <div class="param-cell">
+                            <span class="param-label">Frames</span>
+                            <span class="param-value">${item.frames || params.length || 'N/A'}</span>
+                        </div>
+                        <div class="param-cell">
+                            <span class="param-label">Steps</span>
+                            <span class="param-value">${params.steps || 'N/A'}</span>
+                        </div>
+                        <div class="param-cell">
+                            <span class="param-label">CFG</span>
+                            <span class="param-value">${params.cfg || 'N/A'}</span>
+                        </div>
+                        <div class="param-cell">
+                            <span class="param-label">Seed</span>
+                            <span class="param-value">${params.seed || 'N/A'}</span>
+                        </div>
+                        ${params.loraPairs && params.loraPairs.length ? `
+                            <div class="param-cell">
+                                <span class="param-label">LoRAs</span>
+                                <span class="param-value">${params.loraPairs.length}</span>
+                            </div>
+                        ` : ''}
+                    </div>
                 </div>
             </div>
         `;
