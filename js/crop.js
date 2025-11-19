@@ -89,6 +89,24 @@ function initializeCropArea() {
         return;
     }
     
+    // Reset image styles to ensure container isn't constrained by previous image size
+    image.style.width = '';
+    image.style.height = '';
+    
+    // Force a layout update if needed or calculate available height manually
+    // This helps if the container was collapsed
+    const modalBody = container.closest('.crop-modal-body');
+    if (modalBody) {
+        const controls = modalBody.querySelector('.crop-controls-panel');
+        if (controls) {
+            // Ensure container takes remaining height
+            const availableHeight = modalBody.clientHeight - controls.offsetHeight - 20; // 20px buffer
+            if (container.clientHeight < availableHeight) {
+                container.style.height = availableHeight + 'px';
+            }
+        }
+    }
+
     const containerRect = container.getBoundingClientRect();
     const containerWidth = containerRect.width - 40; // padding
     const containerHeight = containerRect.height - 40;
