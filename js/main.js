@@ -32,6 +32,8 @@ window.retryJob = retryJob;
 window.clearCompletedItems = clearCompletedItems;
 window.cancelAllJobs = cancelAllJobs;
 window.toggleSidebar = toggleSidebar;
+window.remixJob = remixJob;
+window.copyPrompt = copyPrompt;
 
 // ============================================
 // FORM SUBMISSION
@@ -78,6 +80,107 @@ async function handleSubmit(event) {
 // ============================================
 // QUEUE ACTIONS
 // ============================================
+
+async function remixJob(jobId) {
+    const queueItem = state.generationQueue.find(item => item.id === jobId);
+    if (!queueItem || !queueItem.retryData) {
+        alert('Cannot remix this job - no data available');
+        return;
+    }
+
+    const data = queueItem.retryData;
+
+    // Populate Form
+    document.getElementById('positivePrompt').value = data.prompt || '';
+    document.getElementById('negativePrompt').value = data.negativePrompt || '';
+    document.getElementById('videoLength').value = data.length || 81;
+    document.getElementById('videoSteps').value = data.steps || 10;
+    document.getElementById('videoSeed').value = data.seed || 42;
+    document.getElementById('videoCfg').value = data.cfg || 2.0;
+
+    // Handle Image
+    if (data.image) {
+        state.selectedImage = data.image;
+        state.originalImage = data.image; 
+        document.getElementById('imagePreview').src = data.image;
+        document.getElementById('imagePreview').style.display = 'block';
+        document.getElementById('recropButton').style.display = 'inline-block';
+        
+        state.selectedResolution = {
+            width: data.width,
+            height: data.height,
+            tier: 'custom',
+            aspect: 'custom',
+            name: `${data.width}×${data.height}`
+        };
+        
+        import('./resolution.js').then(mod => mod.updateResolutionDisplay());
+    }
+
+    // Handle LORAs
+    const useLoraCheckbox = document.getElementById('useAdditionalLora');
+    const loraSection = document.getElementById('loraSection');
+    const loraContainer = document.getElementById('loraPairsContainer');
+    
+    loraContainer.innerHTML = '';
+    state.loraPairCount = 0;
+
+    if (data.loraPairs && data.loraPairs.length > 0) {
+        useLoraCheckbox.checked = true;
+        loraSection.style.display = 'block';
+        
+        for (const pair of data.loraPairs) {
+            window.addLoraPair();
+            const i = state.loraPairCount;
+            
+            // Use timeout to allow DOM to update
+            setTimeout(() => {
+                const highSelect = document.getElementById(`loraHigh${i}`);
+                const lowSelect = document.getElementById(`loraLow${i}`);
+                const highWeight = document.getElementById(`loraHighWeight${i}`);
+                const lowWeight = document.getElementById(`loraLowWeight${i}`);
+                
+                if (highSelect) highSelect.value = pair.high;
+                if (lowSelect) lowSelect.value = pair.low;
+                if (highWeight) highWeight.value = pair.high_weight;
+                if (lowWeight) lowWeight.value = pair.low_weight;
+            }, 0);
+        }
+    } else {
+        useLoraCheckbox.checked = false;
+        loraSection.style.display = 'none';
+    }
+
+    if (window.innerWidth <= 768) {
+        const panel = document.getElementById('generationPanel');
+        if (panel.classList.contains('collapsed')) {
+            toggleSidebar();
+        }
+    }
+
+    document.querySelector('.sidebar-content').scrollTop = 0;
+    
+    // Visual feedback
+    const submitBtn = document.getElementById('submitButton');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fa-solid fa-check"></i> Parameters Loaded';
+    setTimeout(() => {
+        submitBtn.innerHTML = originalText;
+    }, 1500);
+}
+
+async function copyPrompt(text, btnElement) {
+    const success = await import('./utils.js').then(m => m.copyToClipboard(text));
+    if (success) {
+        const icon = btnElement.querySelector('i');
+        if (icon) {
+            icon.className = 'fa-solid fa-check';
+            setTimeout(() => {
+                icon.className = 'fa-regular fa-copy';
+            }, 1500);
+        }
+    }
+}
 
 async function cancelJob(jobId, silent = false) {
     if (!silent && !confirm('Are you sure you want to cancel this generation?')) {

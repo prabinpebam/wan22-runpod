@@ -39,6 +39,16 @@ export function getElapsedTime(timestamp) {
     return Date.now() - timestamp;
 }
 
+export async function copyToClipboard(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+        return true;
+    } catch (err) {
+        console.error('Failed to copy:', err);
+        return false;
+    }
+}
+
 export async function compressImageIfNeeded(base64Image, maxSizeBytes = 8 * 1024 * 1024) {
     return new Promise((resolve) => {
         if (base64Image.length < maxSizeBytes) {
